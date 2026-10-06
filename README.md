@@ -9,6 +9,8 @@ It runs as an [MCP server](https://code.visualstudio.com/docs/copilot/customizat
 
 The server looks up OEM wheel/tyre data from Wheel-Size and runs deterministic checks: bolt pattern, centre bore, overall tyre diameter, rim/tyre width match, and how far the wheel sits in or out compared with factory sizes. Results are calculated estimates; always verify on the vehicle, especially for lowered or cambered cars, big brakes or aftermarket suspension.
 
+**See [HOW-IT-WORKS.md](HOW-IT-WORKS.md) for a worked example with real output, including a rendered preview.**
+
 ## Requirements
 
 - VS Code with the GitHub Copilot and Copilot Chat extensions, signed in to a Copilot plan
@@ -58,7 +60,7 @@ Every real Wheel-Size request is counted in `~/.wheel-fitment-agent/wheelsize_us
 
 GitHub Copilot has no image generation, so this tool only appears if you provide a Google Gemini API key ([get one in AI Studio](https://aistudio.google.com/apikey)) at the second prompt. Gemini's image models ("Nano Banana") need a **billing-enabled** Google project; on the free tier the image models return a quota error.
 
-It lets you ask Copilot to render a car with new wheels, using file paths to photos or text descriptions: a car photo plus a wheel photo/description edits the photo, and a car description generates one. Images must be JPEG, PNG or WebP up to 10 MB. Renders are saved to `~/.wheel-fitment-agent/renders/`. The model defaults to `gemini-3.1-flash-image`; override it with `GEMINI_IMAGE_MODEL` in the server's `env` block.
+It lets you ask Copilot to render a car with new wheels, using file paths to photos or text descriptions: a car photo plus a wheel photo/description edits the photo, and a car description generates one. Images must be JPEG, PNG or WebP up to 10 MB. Renders are saved to `~/.wheel-fitment-agent/renders/`. Every render prompt tells Gemini to blank number plates and remove other personal identifying details (faces, VINs, addresses, names). This is an instruction to the model, not a guarantee, so check the output before sharing it. The model defaults to `gemini-3.1-flash-image`; override it with `GEMINI_IMAGE_MODEL` in the server's `env` block.
 
 ## Develop
 
