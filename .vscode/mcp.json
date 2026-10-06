@@ -1,0 +1,27 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "wheelsize-api-key",
+      "description": "Wheel-Size API key (https://developer.wheel-size.com/)",
+      "password": true
+    },
+    {
+      "type": "promptString",
+      "id": "openai-api-key",
+      "description": "OpenAI API key for the optional render tool (leave blank to skip)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "wheel-fitment": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/detonnate/wheelFitmentAgent", "wheel-fitment-mcp"],
+      "env": {
+        "WHEELSIZE_API_KEY": "${input:wheelsize-api-key}",
+        "OPENAI_API_KEY": "${input:openai-api-key}"
+      }
+    }
+  }
+}

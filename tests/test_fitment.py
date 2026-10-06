@@ -1,4 +1,4 @@
-from app.fitment import check_fitment, parse_tire, tire_od_mm
+from wheel_fitment.fitment import check_fitment, parse_tire, tire_od_mm
 
 OEM = {
     "technical": {"bolt_pattern": "5x112", "centre_bore": "57.1"},

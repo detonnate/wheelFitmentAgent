@@ -7,10 +7,14 @@ import httpx
 
 from . import config
 
-USAGE_FILE = Path(__file__).resolve().parent.parent / ".wheelsize_usage.json"
+USAGE_FILE = config.DATA_DIR / "wheelsize_usage.json"
 
 
 class QuotaExceeded(RuntimeError):
+    pass
+
+
+class WheelSizeError(RuntimeError):
     pass
 
 
@@ -34,8 +38,13 @@ class _UsageCounter:
             if data["calls"] >= self._limit:
                 raise QuotaExceeded(f"Wheel-Size monthly quota of {self._limit} calls reached.")
             data["calls"] += 1
+            self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.write_text(json.dumps(data))
             return data["calls"]
+
+    def status(self) -> dict:
+        data = self._load()
+        return {"month": data["month"], "calls_used": data["calls"], "monthly_limit": self._limit}
 
 
 class WheelSizeClient:
@@ -48,7 +57,12 @@ class WheelSizeClient:
     async def aclose(self) -> None:
         await self._http.aclose()
 
+    def usage(self) -> dict:
+        return self._usage.status()
+
     async def _get(self, path: str, **params) -> list[dict]:
+        if not self._key:
+            raise WheelSizeError("No Wheel-Size API key configured (set WHEELSIZE_API_KEY).")
         query = {k: v for k, v in params.items() if v not in (None, "")}
         cache_key = (path, tuple(sorted(query.items())))
         if cache_key in self._cache:
@@ -56,7 +70,9 @@ class WheelSizeClient:
 
         self._usage.consume()
         resp = await self._http.get(path, params={**query, "user_key": self._key})
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            # Raised without the URL so the API key never reaches logs or the model.
+            raise WheelSizeError(f"Wheel-Size API returned HTTP {resp.status_code} for {path}")
         data = resp.json().get("data", [])
         self._cache[cache_key] = data
         return data

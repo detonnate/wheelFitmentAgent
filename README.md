@@ -1,122 +1,92 @@
 # Wheel Fitment Agent
 
-An AI agent that tells you whether a set of wheels and tyres will fit a car, and can render a car with new wheels on it.
+A GitHub Copilot agent for VS Code that tells you whether a set of wheels and tyres will fit a car.
 
-- **Fitment advice:** looks up OEM wheel/tyre data from the [Wheel-Size API](https://developer.wheel-size.com/), then checks bolt pattern, centre bore, tyre diameter, rim/tyre width match and how far the wheel sits in or out compared with factory sizes.
-- **Rendering:** upload a car photo and/or a wheel photo (or describe either) and get an image of the car with those wheels, using OpenAI image models.
+It runs as an [MCP server](https://code.visualstudio.com/docs/copilot/customization/mcp-servers) that Copilot Chat calls in agent mode. That means:
 
-Fitment results are calculated estimates. Always verify on the vehicle, especially for lowered or cambered cars, big brake kits or aftermarket suspension.
+- AI usage comes from **your own GitHub Copilot account and credits**. No OpenAI key is needed.
+- You supply **your own [Wheel-Size API key](https://developer.wheel-size.com/)**, entered securely when the server starts. It is never stored in the repo.
+
+The server looks up OEM wheel/tyre data from Wheel-Size and runs deterministic checks: bolt pattern, centre bore, overall tyre diameter, rim/tyre width match, and how far the wheel sits in or out compared with factory sizes. Results are calculated estimates; always verify on the vehicle, especially for lowered or cambered cars, big brakes or aftermarket suspension.
 
 ## Requirements
 
-- Python 3.11+
+- VS Code with the GitHub Copilot and Copilot Chat extensions, signed in to a Copilot plan
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) (provides `uvx`, which downloads and runs the server for you)
 - A Wheel-Size API key
-- An OpenAI API key
 
 ## Install
+
+1. Install `uv`, e.g. on Windows: `winget install astral-sh.uv`
+2. Add the server to VS Code. Either:
+   - **Per project:** copy [.vscode/mcp.json](.vscode/mcp.json) into your workspace's `.vscode/` folder, or
+   - **For all projects:** run **MCP: Open User Configuration** from the Command Palette and paste the contents of that file in.
+3. Start the server: open `mcp.json` and click **Start** above the `wheel-fitment` entry. VS Code prompts for your Wheel-Size key (hidden input). Leave the OpenAI prompt blank unless you want rendering (see below).
+4. *(Optional)* Add the custom agent: copy [.github/agents/wheel-fitment.agent.md](.github/agents/wheel-fitment.agent.md) into your workspace's `.github/agents/` folder, or run **Chat: New Custom Agent** and paste it in.
+
+The server runs straight from this repo with `uvx --from git+https://github.com/detonnate/wheelFitmentAgent wheel-fitment-mcp`, so it needs read access to the repo.
+
+## Use
+
+Open Copilot Chat, choose **Wheel Fitment** from the agent picker (or use **Agent** mode and make sure the `wheel-fitment` tools are enabled), then ask, for example:
+
+> 2003 BMW E46 325Ci, UK. Will 18x8 ET47 wheels with 225/40R18 tyres fit? Bolt pattern is 5x120 and centre bore 72.6.
+
+The agent finds your exact car, pulls its OEM specs and answers with one of:
+
+- `SHOULD FIT`
+- `FITS WITH CAVEATS` (e.g. check arch or brake clearance, speedo error, hub rings needed)
+- `WILL NOT FIT` (e.g. wrong bolt pattern, bore too small, poke or push beyond tolerance)
+
+along with the numbers behind it. For staggered setups give front and rear sizes.
+
+### Tools
+
+| Tool | Purpose |
+|---|---|
+| `search_makes`, `search_models`, `list_modifications` | Identify the exact vehicle |
+| `get_oem_specs` | Factory wheel/tyre sizes, bolt pattern, centre bore |
+| `check_wheel_fitment` | Fitment verdict for proposed wheels/tyres |
+| `wheelsize_api_usage` | Calls used this month vs the limit |
+| `render_car_with_wheels_tool` | Optional, see below |
+
+### API quota
+
+Every real Wheel-Size request is counted in `~/.wheel-fitment-agent/wheelsize_usage.json` (resets monthly). When the limit is reached, calls stop with a clear error. The default limit is 300; change it by setting `WHEELSIZE_MONTHLY_LIMIT` in the server's `env` block. Repeated identical requests in one session are cached and cost nothing. A fitment check typically uses 4-5 calls.
+
+## Optional: render a car with new wheels
+
+GitHub Copilot has no image generation, so this tool only appears if you provide an OpenAI API key at the second prompt. It then lets you ask Copilot to render a car with new wheels, using either file paths to photos or text descriptions (car photo + wheel photo/description edits the photo; a car description generates one). Images must be JPEG, PNG or WebP up to 10 MB. Renders are saved to `~/.wheel-fitment-agent/renders/`.
+
+## Develop
 
 ```powershell
 git clone https://github.com/detonnate/wheelFitmentAgent.git
 cd wheelFitmentAgent
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-On macOS/Linux, activate with `source .venv/bin/activate`.
-
-## Configure
-
-Copy `.env.example` to `.env` and fill in your keys:
-
-```
-WHEELSIZE_API_KEY=your-wheel-size-key
-OPENAI_API_KEY=your-openai-key
-```
-
-Optional settings:
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `OPENAI_MODEL` | `gpt-4.1` | Chat/agent model |
-| `OPENAI_VISION_MODEL` | `gpt-4.1-mini` | Describes uploaded wheel photos |
-| `OPENAI_IMAGE_MODEL` | `gpt-image-1` | Rendering model |
-| `WHEELSIZE_MONTHLY_LIMIT` | `300` | Max Wheel-Size API calls per month |
-
-`.env` is git-ignored. Never commit it.
-
-### API quota
-
-The app counts every real Wheel-Size request in `.wheelsize_usage.json` (resets each month) and stops at `WHEELSIZE_MONTHLY_LIMIT`. Identical requests in one session are cached and cost nothing. A single fitment check typically uses 4-5 calls.
-
-## Run
-
-```powershell
-uvicorn app.main:app --reload
-```
-
-Open http://127.0.0.1:8000.
-
-## Use
-
-### Check fitment
-
-In the chat panel, give the agent:
-
-1. Your car: make, model, year, region (e.g. `eudm` for Europe, `usdm` for USA) and trim/engine.
-2. The wheels: diameter (in), width (in), offset/ET (mm), tyre size (e.g. `225/40R18`), and ideally bolt pattern and centre bore.
-3. Rear sizes too, if the setup is staggered.
-
-Example: *"2003 BMW E46 325Ci, UK. I have 19x8.5 ET30 on the front with 225/35R19 and 19x10 ET40 on the rear with 265/30R19."*
-
-The agent returns one of:
-
-- `SHOULD FIT`
-- `FITS WITH CAVEATS` (e.g. check arch or brake clearance, speedo error, hub rings needed)
-- `WILL NOT FIT` (e.g. wrong bolt pattern, bore too small, poke or push beyond tolerance)
-
-along with the numbers behind it (mm further out/in than OEM, overall diameter change).
-
-### Render a car with new wheels
-
-Use the "Preview wheels on a car" panel:
-
-| You provide | Result |
-|---|---|
-| Car photo + wheel photo | Wheels in your photo are replaced with the ones shown |
-| Car photo + wheel description | Wheels replaced based on the description |
-| Car description + wheel photo/description | A generated image of that car with the wheels |
-
-Add optional stance notes (e.g. "lowered 30mm, flush fitment"). Images must be JPEG, PNG or WebP, up to 10 MB.
-
-## API
-
-| Endpoint | Description |
-|---|---|
-| `POST /api/chat` | JSON `{ "message": "...", "session_id": "..." }` returns `{ "session_id", "reply" }` |
-| `POST /api/render` | Multipart form: `car_image`, `wheel_image`, `car_description`, `wheel_description`, `stance_notes` returns `{ "image_b64" }` |
-
-Chat history is held in memory and is lost on restart.
-
-## Tests
-
-```powershell
+pip install -e ".[dev]"
 pytest
 ```
 
-## Project layout
+To run your local copy in VS Code, change the server entry in `mcp.json` to:
+
+```json
+"command": "uv",
+"args": ["run", "--directory", "${workspaceFolder}", "wheel-fitment-mcp"]
+```
+
+Layout:
 
 ```
-app/
-  agent.py       OpenAI tool-calling agent
+wheel_fitment/
+  server.py      MCP server and tools
   fitment.py     Deterministic fitment checks
   wheelsize.py   Wheel-Size API client (quota counter + cache)
-  rendering.py   Image editing/generation
-  main.py        FastAPI app
-  static/        Web UI
+  rendering.py   Optional image editing/generation
+.github/agents/  Custom Copilot agent definition
+.vscode/mcp.json Server configuration with secure key prompts
 tests/           Fitment unit tests
 ```
 
-## Tuning the checks
-
-Thresholds for poke/push (`OUT_OK`, `OUT_WARN`, `IN_OK`, `IN_WARN`) and the tyre-width rule are rules of thumb in `app/fitment.py`. Adjust them to your tolerance.
+Thresholds for poke/push (`OUT_OK`, `OUT_WARN`, `IN_OK`, `IN_WARN`) and the tyre-width rule are rules of thumb in `wheel_fitment/fitment.py`. Adjust them to your tolerance.
