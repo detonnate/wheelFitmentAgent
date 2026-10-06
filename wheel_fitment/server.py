@@ -137,19 +137,20 @@ if config.GEMINI_API_KEY:
         stance_notes: str = "",
     ) -> list:
         """Render a car with new wheels. Give a car photo path (edits the photo) or a car description (generates one),
-        plus a wheel photo path or wheel description. Saves a PNG and returns it."""
-        png = await render_car_with_wheels(
+        plus a wheel photo path or wheel description. Saves the image and returns it."""
+        data = await render_car_with_wheels(
             car_image=_read_image(car_image_path),
             wheel_image=_read_image(wheel_image_path),
             car_description=car_description,
             wheel_description=wheel_description,
             stance_notes=stance_notes,
         )
+        fmt = "png" if data.startswith(b"\x89PNG") else "jpeg"
         out_dir = config.DATA_DIR / "renders"
         out_dir.mkdir(parents=True, exist_ok=True)
-        out = out_dir / f"render-{int(time.time())}.png"
-        out.write_bytes(png)
-        return [Image(data=png, format="png"), f"Saved to {out}"]
+        out = out_dir / f"render-{int(time.time())}.{'png' if fmt == 'png' else 'jpg'}"
+        out.write_bytes(data)
+        return [Image(data=data, format=fmt), f"Saved to {out}"]
 
 
 def main() -> None:
