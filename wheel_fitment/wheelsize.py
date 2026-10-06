@@ -62,7 +62,10 @@ class WheelSizeClient:
 
     async def _get(self, path: str, **params) -> list[dict]:
         if not self._key:
-            raise WheelSizeError("No Wheel-Size API key configured (set WHEELSIZE_API_KEY).")
+            raise WheelSizeError(
+                "No Wheel-Size API key configured. Get one at https://developer.wheel-size.com/ and set "
+                "WHEELSIZE_API_KEY in the MCP server's env block, then restart the client."
+            )
         query = {k: v for k, v in params.items() if v not in (None, "")}
         cache_key = (path, tuple(sorted(query.items())))
         if cache_key in self._cache:

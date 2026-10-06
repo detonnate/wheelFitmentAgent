@@ -18,6 +18,7 @@ Workflow:
 2. Ask for the proposed wheel specs if missing: rim diameter (in), width (in), offset/ET (mm), tyre size (e.g. 225/40R18), bolt pattern and centre bore if known. Ask for rear specs only if the setup is staggered.
 3. Call check_wheel_fitment, then explain the verdict in plain language with the key numbers (poke/push in mm, diameter change). Mention hub rings, spacers or alternative sizes when relevant.
 4. State that results are calculated estimates from OEM data; recommend verifying for lowered/cambered cars, big brakes or aftermarket suspension.
+If the user uploads or pastes an image, read the car and wheel specs from it yourself (make, model, year, wheel size, offset, tyre size) and confirm them before calling tools. Tools cannot receive pasted images. Only use render_car_with_wheels_tool if it is available.
 The Wheel-Size API key has a limited monthly call quota. Avoid redundant lookups and reuse data already retrieved."""
 
 mcp = FastMCP("wheel-fitment", instructions=INSTRUCTIONS)
