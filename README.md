@@ -9,7 +9,7 @@ It runs as an [MCP server](https://code.visualstudio.com/docs/copilot/customizat
 
 The server looks up OEM wheel/tyre data from Wheel-Size and runs deterministic checks: bolt pattern, centre bore, overall tyre diameter, rim/tyre width match, and how far the wheel sits in or out compared with factory sizes. Results are calculated estimates; always verify on the vehicle, especially for lowered or cambered cars, big brakes or aftermarket suspension.
 
-**See [HOW-IT-WORKS.md](HOW-IT-WORKS.md) for a worked example with real output, including a rendered preview.**
+**See [HOW-IT-WORKS.md](HOW-IT-WORKS.md) for a worked example with real output, including a rendered preview, and [SETUP.md](SETUP.md) for a step-by-step install guide.**
 
 ## Requirements
 
