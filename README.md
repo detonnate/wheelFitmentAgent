@@ -21,7 +21,7 @@ The server looks up OEM wheel/tyre data from Wheel-Size and runs deterministic c
 2. Add the server to VS Code. Either:
    - **Per project:** copy [.vscode/mcp.json](.vscode/mcp.json) into your workspace's `.vscode/` folder, or
    - **For all projects:** run **MCP: Open User Configuration** from the Command Palette and paste the contents of that file in.
-3. Start the server: open `mcp.json` and click **Start** above the `wheel-fitment` entry. VS Code prompts for your Wheel-Size key (hidden input). Leave the OpenAI prompt blank unless you want rendering (see below).
+3. Start the server: open `mcp.json` and click **Start** above the `wheel-fitment` entry. VS Code prompts for your Wheel-Size key (hidden input). Leave the Gemini prompt blank unless you want rendering (see below).
 4. *(Optional)* Add the custom agent: copy [.github/agents/wheel-fitment.agent.md](.github/agents/wheel-fitment.agent.md) into your workspace's `.github/agents/` folder, or run **Chat: New Custom Agent** and paste it in.
 
 The server runs straight from this repo with `uvx --from git+https://github.com/detonnate/wheelFitmentAgent wheel-fitment-mcp`, so it needs read access to the repo.
@@ -56,7 +56,9 @@ Every real Wheel-Size request is counted in `~/.wheel-fitment-agent/wheelsize_us
 
 ## Optional: render a car with new wheels
 
-GitHub Copilot has no image generation, so this tool only appears if you provide an OpenAI API key at the second prompt. It then lets you ask Copilot to render a car with new wheels, using either file paths to photos or text descriptions (car photo + wheel photo/description edits the photo; a car description generates one). Images must be JPEG, PNG or WebP up to 10 MB. Renders are saved to `~/.wheel-fitment-agent/renders/`.
+GitHub Copilot has no image generation, so this tool only appears if you provide a Google Gemini API key ([get one in AI Studio](https://aistudio.google.com/apikey)) at the second prompt. Gemini's image models ("Nano Banana") need a **billing-enabled** Google project; on the free tier the image models return a quota error.
+
+It lets you ask Copilot to render a car with new wheels, using file paths to photos or text descriptions: a car photo plus a wheel photo/description edits the photo, and a car description generates one. Images must be JPEG, PNG or WebP up to 10 MB. Renders are saved to `~/.wheel-fitment-agent/renders/`. The model defaults to `gemini-3.1-flash-image`; override it with `GEMINI_IMAGE_MODEL` in the server's `env` block.
 
 ## Develop
 
@@ -83,7 +85,7 @@ wheel_fitment/
   server.py      MCP server and tools
   fitment.py     Deterministic fitment checks
   wheelsize.py   Wheel-Size API client (quota counter + cache)
-  rendering.py   Optional image editing/generation
+  rendering.py   Optional image editing/generation (Gemini)
 .github/agents/  Custom Copilot agent definition
 .vscode/mcp.json Server configuration with secure key prompts
 tests/           Fitment unit tests

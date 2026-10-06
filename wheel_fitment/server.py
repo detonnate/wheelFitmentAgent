@@ -125,7 +125,7 @@ def _read_image(path: str | None) -> tuple[bytes, str] | None:
     return p.read_bytes(), mime
 
 
-if config.OPENAI_API_KEY:
+if config.GEMINI_API_KEY:
 
     @mcp.tool()
     async def render_car_with_wheels_tool(
