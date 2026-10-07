@@ -94,3 +94,7 @@ tests/           Fitment unit tests
 ```
 
 Thresholds for poke/push (`OUT_OK`, `OUT_WARN`, `IN_OK`, `IN_WARN`) and the tyre-width rule are rules of thumb in `wheel_fitment/fitment.py`. Adjust them to your tolerance.
+
+## Licence
+
+MIT, see [LICENSE](LICENSE). The example images in `docs/` are AI edits of publicly available third-party photos and are not covered by this licence; they will be removed on request. Wheel-Size and Gemini are used under their own terms and keys.
